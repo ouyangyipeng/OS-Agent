@@ -102,6 +102,15 @@ class CLI:
         self.config = self.agent.config
         self.cli_config = self.config.get('cli', {})
         self.prompt_config = self.cli_config.get('prompt', {})
+        self.cwd = os.getcwd()  # 当前工作目录
+        
+        # 指令穿透 - 这些命令直接由操作系统执行
+        self.passthrough_commands = {
+            'ls', 'll', 'la', 'l', 'cd', 'pwd', 'mkdir', 'rmdir', 'rm', 'cp', 'mv', 'cat', 'head', 'tail',
+            'touch', 'chmod', 'chown', 'grep', 'find', 'which', 'whoami', 'hostname', 'date', 'echo',
+            'ps', 'kill', 'killall', 'top', 'df', 'du', 'free', 'uname', 'arch', 'who', 'w', 'id',
+            'type', 'alias', 'history', 'man', 'less', 'more', 'nano', 'vim', 'vi', 'curl', 'wget'
+        }
         
         # 退出标志
         self.running = True
@@ -183,6 +192,7 @@ class CLI:
 ║     ██║ ╚═╝ ██║███████╗███████╗   ██║   ╚██████╗███████╗███████╗║
 ║     ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝    ╚═════╝╚══════╝╚══════╝║
 ║                                                                  ║
+║              YatAIOS - Yet Another Transformative AI OS          ║
 ║         融合原生AI智能体的Bianbu系统交互范式重构                   ║
 ║         LLM OS - Intent-Driven Operating System                 ║
 ║                                                                  ║
@@ -395,12 +405,49 @@ class CLI:
         
         while self.running:
             try:
-                # 获取用户输入
-                prompt = self.prompt_config.get('main', '🏠 Bianbu > ')
-                if not self.use_rich:
-                    prompt = "Bianbu > "
+                # 获取当前目录简称
+                cwd_short = os.path.basename(self.cwd) or self.cwd
+                
+                # 获取用户输入 - 显示YatAIOS和当前路径
+                if self.use_rich:
+                    prompt = f"[cyan]YatAIOS[/cyan]:[blue]{cwd_short}[/blue]$ "
+                else:
+                    prompt = f"YatAIOS:{cwd_short}$ "
                 
                 user_input = input(prompt).strip()
+                
+                # 指令穿透 - 检测是否是操作系统命令
+                first_word = user_input.split()[0] if user_input.split() else ''
+                if first_word in self.passthrough_commands:
+                    # 直接执行操作系统命令
+                    try:
+                        import subprocess
+                        result = subprocess.run(
+                            user_input,
+                            shell=True,
+                            capture_output=True,
+                            text=True,
+                            cwd=self.cwd
+                        )
+                        if result.stdout:
+                            print(result.stdout)
+                        if result.stderr:
+                            print(result.stderr, file=sys.stderr)
+                        
+                        # 如果是cd命令，更新cwd
+                        if first_word == 'cd':
+                            target = user_input.split()[1] if len(user_input.split()) > 1 else os.path.expanduser('~')
+                            try:
+                                new_cwd = os.path.abspath(os.path.join(self.cwd, target))
+                                if os.path.isdir(new_cwd):
+                                    self.cwd = new_cwd
+                                    os.chdir(new_cwd)
+                            except:
+                                pass
+                        continue
+                    except Exception as e:
+                        self.print(f"命令执行失败: {e}", "error")
+                        continue
                 
                 # 空输入处理
                 if not user_input:
