@@ -1,11 +1,14 @@
-# Bianbu LLM OS 项目进度跟踪
+# YatAIOS 项目进度跟踪
+## (Yet Another Transformative AI OS)
 
 ## 项目概述
-- **项目名称**: 融合原生AI智能体的Bianbu系统交互范式重构
+- **项目名称**: YatAIOS - Yet Another Transformative AI OS
+- **中文名称**: 融合原生AI智能体的Bianbu系统交互范式重构
 - **英文名称**: Reconstructing Bianbu OS Interaction Paradigm with Native AI Agent Integration
 - **目标**: 实现一个 AI 原生操作系统 (LLM OS) 原型
 - **硬件平台**: 进迭时空 K1 RISC-V AI 开发平台 (MUSE BOOK)
 - **基础系统**: Ubuntu 22.04 (Bianbu 系统)
+- **赛道**: 2026年全国大学生计算机系统能力大赛-操作系统设计赛
 
 ---
 
@@ -52,7 +55,35 @@
 
 ## 已完成的工作
 
-### 2026-03-19
+### 2026-03-19 (迭代14-15)
+
+#### Docker 容器支持
+- 创建 `Dockerfile`: Ubuntu 22.04 基础镜像，772MB
+- 创建 `docker-compose.yml`: 本地开发配置
+- 创建 `bianbu/docker-compose.bianbu.yml`: Bianbu K1 RISC-V 平台配置
+- 修复 OpenAI SDK 兼容性: `openai>=1.12.0` + `httpx==0.27.0`
+- 容器测试验证通过
+
+#### Nexa 智能体脚本扩展
+- 创建 `nexa_scripts/yatai_os_core.nx`: 核心 Nexa 模块
+  - 协议定义: TaskResult, IntentType, AgentCapability
+  - 智能体: IntentRouter, FileManager, ProcessManager, NetworkManager, PackageManager
+  - 工作流: user_onboarding, file_operation, system_monitor
+- Nexa 运行时集成: `core/nexa_runtime.py`
+
+#### CLI 增强
+- 指令穿透模式: 支持 ls, cd, pwd, cat 等基础命令
+- YatAIOS 品牌提示符: `YatAIOS:path$`
+- Rich 终端格式化: 修复 cyan/blue 控制符渲染
+
+#### 项目重构
+- 项目正式命名为 **YatAIOS** (Yet Another Transformative AI OS)
+- API 配置更新: glm-5 模型, aihub.arcsysu.cn 端点
+- 文档全面更新: README, PROGRESS, docs/
+
+---
+
+### 历史记录 (2026-03-18)
 
 #### 项目初始化
 - 创建目录结构:
@@ -217,4 +248,4 @@
 
 ---
 
-*最后更新: 2026-03-19 10:10 UTC*
+*最后更新: 2026-03-19 15:10 UTC*

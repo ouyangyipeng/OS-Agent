@@ -56,14 +56,15 @@ RUN pip install --upgrade pip && \
     pip install \
     langchain==0.1.20 \
     langchain-community==0.0.38 \
-    openai==1.30.1 \
+    openai>=1.12.0 \
     anthropic==0.21.3 \
     requests==2.31.0 \
     psutil==5.9.8 \
     pyyaml==6.0.1 \
     rich==13.7.1 \
     aiofiles==23.2.1 \
-    python-dotenv==1.0.1
+    python-dotenv==1.0.1 \
+    httpx==0.27.0
 
 # 编译Nexa脚本（如果nexa可用）
 RUN if command -v nexa &> /dev/null; then \

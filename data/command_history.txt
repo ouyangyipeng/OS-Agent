@@ -12,3 +12,7 @@ exit
 exit
 现在系统情况如何
 exit
+help
+exit
+help
+查看系统信息

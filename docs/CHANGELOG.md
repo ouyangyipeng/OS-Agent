@@ -18,6 +18,8 @@
 | 6 | 外部工具扩展 | 2026-03-19 | 1 | WebSearch、CLI执行 |
 | 7 | CLI增强 | 2026-03-19 | 1 | 持久记忆命令 |
 | 8 | 完整文档 | 2026-03-19 | 1 | 方案设计、源码分析 |
+| 9 | Docker容器支持 | 2026-03-19 | 1 | Dockerfile、docker-compose |
+| 10 | Nexa扩展与品牌更新 | 2026-03-19 | 1 | Nexa模块、YatAIOS品牌 |
 
 ---
 
@@ -422,18 +424,88 @@ class CLIExecutionTool:
 
 ---
 
+## 迭代 9: Docker容器支持
+
+### 日期
+2026-03-19
+
+### 目标
+为 YatAIOS 添加 Docker 容器化支持，方便在不同平台上部署和测试。
+
+### 完成的工作
+
+#### 9.1 Dockerfile 创建
+创建基于 Ubuntu 22.04 的 Docker 镜像：
+- 包含 Python 3.10、pip、git、curl 等基础工具
+- 自动安装所有 Python 依赖
+- 编译 Nexa 脚本（如果 nexac 可用）
+- 暴露 8080 端口
+- 默认启动 CLI
+
+#### 9.2 docker-compose.yml
+- 本地开发配置
+- yataios-dev 服务定义
+
+#### 9.3 bianbu/docker-compose.bianbu.yml
+Bianbu K1 RISC-V 平台专用配置：
+- yataios-dev: 开发环境
+- bianbu-qemu: QEMU 模拟器
+- yataiosd: 后台守护进程
+
+#### 9.4 OpenAI SDK 兼容性修复
+- 将 `openai==1.30.1` 改为 `openai>=1.12.0`
+- 添加 `httpx==0.27.0` 解决 proxies 参数问题
+
+#### 9.5 bianbu/README.md
+创建 Bianbu 平台专用部署文档
+
+---
+
+## 迭代 10: Nexa扩展与品牌更新
+
+### 日期
+2026-03-19
+
+### 目标
+扩展 Nexa 智能体模块，更新项目品牌为 YatAIOS。
+
+### 完成的工作
+
+#### 10.1 Nexa 核心模块扩展
+创建 [`nexa_scripts/yatai_os_core.nx`](nexa_scripts/yatai_os_core.nx)：
+- 协议定义: TaskResult, IntentType, AgentCapability
+- 智能体: IntentRouter, FileManager, ProcessManager, NetworkManager, PackageManager
+- 工作流: user_onboarding, file_operation, system_monitor
+
+#### 10.2 CLI 品牌更新
+- 项目正式命名为 **YatAIOS** (Yet Another Transformative AI OS)
+- 提示符更新为 `YatAIOS:path$`
+- Rich 终端格式化修复 cyan/blue 控制符
+
+#### 10.3 API 配置更新
+- 模型: glm-5
+- 端点: https://aihub.arcsysu.cn/v1
+- API Key: sk-N9GlFtqrrVB6OsJ51O8Kyg
+
+#### 10.4 文档更新
+- PROGRESS.md: 添加迭代 14-15 记录
+- bianbu/README.md: 更新 Docker 部署说明
+- docs/CHANGELOG.md: 添加迭代 9-10
+
+---
+
 ## 未来迭代规划
 
 ### 计划中的迭代
 
 | 迭代 | 名称 | 目标 |
 |------|------|------|
-| 9 | Web UI | 添加 Web 界面 |
-| 10 | REST API | 暴露 REST 接口 |
-| 11 | 多用户 | 支持多用户隔离 |
-| 12 | 向量记忆 | 集成向量数据库 |
-| 13 | 视觉理解 | 添加图像处理 |
+| 11 | RISC-V 交叉编译 | Docker buildx 交叉编译支持 |
+| 12 | Web UI | 添加 Web 界面 |
+| 13 | REST API | 暴露 REST 接口 |
+| 14 | 多用户 | 支持多用户隔离 |
+| 15 | 向量记忆 | 集成向量数据库 |
 
 ---
 
-*最后更新: 2026-03-19*
+*最后更新: 2026-03-19 15:12 UTC*

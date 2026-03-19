@@ -78,14 +78,14 @@ __tool_web_search_schema = {
 
 IntentRouter = NexaAgent(
     name="IntentRouter",
-    prompt="Analyze user input and classify intent type:
+    prompt="""Analyze user input and classify intent type:
     - file_op: file operations (ls, cd, cat, mkdir, rm, cp, mv)
     - system_info: system info (top, free, df, uname, ps, whoami)
     - network: network operations (ping, curl, wget, netstat)
     - security: security operations (chmod, chown, su, sudo)
     - web_search: web search (search, google, bing)
     - ai_chat: general conversation
-    Return JSON format with type, confidence and params fields",
+    Return JSON format with type, confidence and params fields""",
     model="minimax-m2.5",
     role="User Intent Classifier",
     memory_scope="local",

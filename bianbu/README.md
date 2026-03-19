@@ -62,12 +62,47 @@ bash build_and_run.sh --cli     # 启动CLI
 如果暂时无法访问K1 RISC-V硬件，可以使用Docker容器在x86_64平台上模拟：
 
 ```bash
-# 构建Docker镜像
-docker build -t yataios -f Dockerfile.bianbu ../
+# 进入项目根目录
+cd agent-os
+
+# 构建Docker镜像（基于Ubuntu 22.04 x86_64）
+docker build -t yataios .
 
 # 运行容器
 docker run -it yataios
+
+# 带API密钥运行
+docker run -it -e YATAIOS_API_KEY="sk-..." yataios
 ```
+
+### 方式四：使用docker-compose
+
+```bash
+# 启动所有服务
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f
+```
+
+## RISC-V 交叉编译 Docker 镜像
+
+当前 buildx 默认驱动不支持 RISC-V 平台交叉编译。可选方案：
+
+### 方案一：使用 QEMU user-mode（需要 Docker Hub 访问）
+
+```bash
+# 启用 binfmt_misc 支持
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+# 拉取 RISC-V 镜像并运行
+docker pull ubuntu:24.04/riscv64
+docker run -it ubuntu:24.04/riscv64 uname -m
+```
+
+### 方案二：使用进迭时空提供的交叉编译环境
+
+参考 Bianbu 官方文档搭建 RISC-V 交叉编译环境。
 
 ## 交叉编译（可选）
 
