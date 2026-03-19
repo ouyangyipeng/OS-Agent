@@ -3,3 +3,8 @@ help
 exit
 help
 exit
+查看当前目录的文件
+exit
+查看当前目录的文件
+exit
+exit

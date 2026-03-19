@@ -318,7 +318,8 @@ class LLMBridge:
     def __init__(self, config: Dict):
         self.config = config
         self.client = None
-        self.provider = config.get('primary', {}).get('provider', 'openai')
+        self.llm_config = config.get('llm', {}).get('primary', {})
+        self.provider = self.llm_config.get('provider', 'openai')
         self._init_client()
     
     def _init_client(self):
@@ -328,13 +329,15 @@ class LLMBridge:
                 logger.error("OpenAI SDK 不可用")
                 return
             
-            api_key = os.environ.get('OPENAI_API_KEY') or self.config.get('primary', {}).get('api_key')
+            api_key = os.environ.get('OPENAI_API_KEY') or self.llm_config.get('api_key')
             if not api_key:
                 logger.warning("未设置 OPENAI_API_KEY")
             
-            self.client = OpenAI(api_key=api_key)
-            self.model = self.config.get('primary', {}).get('model', 'gpt-4o-mini')
-            logger.info(f"OpenAI 客户端初始化完成，模型: {self.model}")
+            # 支持自定义API URL（如 aihub.arcsysu.cn）
+            api_base = self.llm_config.get('api_base', 'https://api.openai.com/v1')
+            self.client = OpenAI(api_key=api_key, base_url=api_base)
+            self.model = self.llm_config.get('model', 'gpt-4o-mini')
+            logger.info(f"OpenAI 客户端初始化完成，模型: {self.model}，URL: {api_base}")
         
         elif self.provider == 'anthropic':
             try:
@@ -382,8 +385,8 @@ class LLMBridge:
             params = {
                 "model": self.model,
                 "messages": messages,
-                "temperature": self.config.get('primary', {}).get('temperature', 0.7),
-                "max_tokens": self.config.get('primary', {}).get('max_tokens', 2048),
+                "temperature": self.llm_config.get('temperature', 0.7),
+                "max_tokens": self.llm_config.get('max_tokens', 2048),
             }
             
             if tools:
