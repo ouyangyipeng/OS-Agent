@@ -77,7 +77,7 @@ class CLI:
     提供美观的交互界面，展示 AI 意图理解和执行过程
     """
     
-    def __init__(self, config_path: str = "config.yaml", verbose: bool = False, 
+    def __init__(self, config_path: str = "config.yaml", verbose: bool = False,
                  use_rich: bool = True, color: bool = True):
         """初始化 CLI"""
         self.verbose = verbose
@@ -88,6 +88,10 @@ class CLI:
         # 初始化核心组件
         self.agent = AgentDaemon(config_path)
         self.session_id = None
+        
+        # 初始化持久记忆存储（OpenCLAW风格的长期助手）
+        from core.persistent_memory import PersistentMemoryStore
+        self.persistent_memory = PersistentMemoryStore()
         
         # 命令历史
         self.history: List[str] = []
@@ -107,7 +111,7 @@ class CLI:
     
     def _signal_handler(self, signum, frame):
         """处理退出信号"""
-        self.running False
+        self.running = False
         print("\n收到退出信号，正在清理...")
         self._save_history()
         sys.exit(0)
@@ -219,6 +223,18 @@ class CLI:
   reject <id>       拒绝待审核任务
   search <query>    搜索记忆中的相关任务
   exit / quit       退出程序
+  
+  [持久记忆命令]
+  memory list       列出所有记忆
+  memory add <k> <v> 添加短期记忆
+  memory get <key>  获取指定记忆
+  memory stats      显示记忆统计
+  memory clear     清除短期记忆
+  
+  [技能管理命令]
+  skill list        列出已学习技能
+  skill add <name> <desc> <category> 学习新技能
+  skill forget <name> 遗忘技能
   
 直接输入自然语言即可与 AI 交互，例如:
   "查看系统信息"
@@ -444,6 +460,16 @@ class CLI:
                     self._print_search_results(results)
                     continue
                 
+                # ========== 持久记忆命令 ==========
+                elif user_input.lower().startswith('memory '):
+                    self._handle_memory_command(user_input[7:].strip())
+                    continue
+                
+                # ========== 技能管理命令 ==========
+                elif user_input.lower().startswith('skill '):
+                    self._handle_skill_command(user_input[6:].strip())
+                    continue
+                
                 # 处理 AI 意图
                 self.print("正在分析您的意图...", "thinking")
                 
@@ -501,6 +527,164 @@ class CLI:
             print("\n搜索结果:")
             for r in results:
                 print(f"  - {r.get('user_intent', '')[:50]}...")
+    
+    def _handle_memory_command(self, args: str):
+        """
+        处理持久记忆命令
+        
+        Args:
+            args: 命令参数 (list|add <key> <value>|get <key>|stats|clear)
+        """
+        parts = args.split(maxsplit=1)
+        sub_cmd = parts[0].lower() if parts else ''
+        
+        if sub_cmd == 'list':
+            # 列出所有记忆
+            recent = self.persistent_memory.get_recent_memories(limit=20)
+            long_term = self.persistent_memory.get_long_term_memories()
+            
+            if self.use_rich and self.console:
+                table = Table(title="记忆列表", show_header=True)
+                table.add_column("层级", style="cyan", width=12)
+                table.add_column("键", style="yellow")
+                table.add_column("值", style="white")
+                table.add_column("重要性", style="dim", width=8)
+                
+                for m in recent:
+                    table.add_row(
+                        m.level.name,
+                        m.key[:30],
+                        str(m.value)[:40] if m.value else "",
+                        f"{m.importance:.1f}"
+                    )
+                for m in long_term:
+                    table.add_row(
+                        m.level.name,
+                        m.key[:30],
+                        str(m.value)[:40] if m.value else "",
+                        f"{m.importance:.1f}"
+                    )
+                self.console.print(table)
+            else:
+                print("\n=== 记忆列表 ===")
+                for m in recent + long_term:
+                    print(f"[{m.level.name}] {m.key}: {str(m.value)[:40]}")
+        
+        elif sub_cmd == 'add':
+            # 添加记忆: memory add <key> <value>
+            if len(parts) < 2 or ' ' not in parts[1]:
+                self.print("用法: memory add <key> <value>", "warning")
+                return
+            key_val = parts[1].split(maxsplit=1)
+            if len(key_val) < 2:
+                self.print("用法: memory add <key> <value>", "warning")
+                return
+            key, value = key_val[0], key_val[1]
+            self.persistent_memory.store_short_term(key, value)
+            self.print(f"已添加短期记忆: {key}", "success")
+        
+        elif sub_cmd == 'get':
+            # 获取记忆: memory get <key>
+            if len(parts) < 2:
+                self.print("用法: memory get <key>", "warning")
+                return
+            key = parts[1]
+            value = self.persistent_memory.retrieve(key)
+            if value:
+                self.print(f"{key}: {value}", "info")
+            else:
+                self.print(f"未找到记忆: {key}", "warning")
+        
+        elif sub_cmd == 'stats':
+            # 显示记忆统计
+            stats = self.persistent_memory.get_memory_stats()
+            if self.use_rich and self.console:
+                table = Table(title="记忆统计", show_header=False)
+                table.add_column("指标", style="cyan")
+                table.add_column("值", style="white")
+                for level_name, count in stats.get('by_level', {}).items():
+                    table.add_row(level_name, str(count))
+                self.console.print(table)
+            else:
+                print("\n=== 记忆统计 ===")
+                for level_name, count in stats.get('by_level', {}).items():
+                    print(f"  {level_name}: {count}")
+        
+        elif sub_cmd == 'clear':
+            # 清除短期记忆
+            self.persistent_memory.cleanup_expired()
+            self.print("已清除过期记忆", "success")
+        
+        else:
+            self.print(f"未知子命令: {sub_cmd}", "error")
+            self.print("可用: list|add|get|stats|clear", "info")
+    
+    def _handle_skill_command(self, args: str):
+        """
+        处理技能管理命令
+        
+        Args:
+            args: 命令参数 (list|add <name> <desc> <category>|forget <name>)
+        """
+        parts = args.split(maxsplit=1)
+        sub_cmd = parts[0].lower() if parts else ''
+        
+        if sub_cmd == 'list':
+            # 列出已学习技能
+            skills = self.persistent_memory.get_skills()
+            if not skills:
+                self.print("还没有学习任何技能", "info")
+                return
+            
+            if self.use_rich and self.console:
+                table = Table(title="已学习技能", show_header=True)
+                table.add_column("技能ID", style="cyan")
+                table.add_column("名称", style="yellow")
+                table.add_column("类别", style="green")
+                table.add_column("熟练度", style="magenta", width=8)
+                table.add_column("状态", style="white", width=10)
+                
+                for s in skills:
+                    table.add_row(
+                        s.get('skill_id', '')[:20],
+                        s.get('name', ''),
+                        s.get('category', ''),
+                        f"{s.get('proficiency', 0):.1f}",
+                        s.get('state', 'UNKNOWN')
+                    )
+                self.console.print(table)
+            else:
+                print("\n=== 已学习技能 ===")
+                for s in skills:
+                    print(f"  [{s.get('category', '')}] {s.get('name', '')} - 熟练度: {s.get('proficiency', 0):.1f}")
+        
+        elif sub_cmd == 'add':
+            # 学习新技能: skill add <name> <desc> <category>
+            if len(parts) < 2:
+                self.print("用法: skill add <name> <desc> <category>", "warning")
+                return
+            # 解析: name|desc|category
+            parts_all = parts[1].split('|')
+            if len(parts_all) < 3:
+                self.print("用法: skill add <name>|<desc>|<category>", "warning")
+                return
+            name, desc, category = [p.strip() for p in parts_all[:3]]
+            skill_id = f"skill.{category.lower()}.{name.lower().replace(' ', '_')}"
+            self.persistent_memory.learn_skill(skill_id, name, desc, category)
+            self.print(f"已学习新技能: {name}", "success")
+        
+        elif sub_cmd == 'forget':
+            # 遗忘技能: skill forget <name>
+            if len(parts) < 2:
+                self.print("用法: skill forget <name>", "warning")
+                return
+            skill_name = parts[1]
+            self.persistent_memory.forget_skill(skill_name)
+            self.print(f"已遗忘技能: {skill_name}", "success")
+        
+        else:
+            self.print(f"未知子命令: {sub_cmd}", "error")
+            self.print("可用: list|add|forget", "info")
     
     def run_single(self, intent: str) -> Dict:
         """
