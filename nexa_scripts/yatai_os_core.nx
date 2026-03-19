@@ -1,0 +1,174 @@
+/*
+ * YatAIOS - Nexa核心智能体模块
+ * 定义Intent-Driven OS的核心智能体和工作流
+ */
+
+// ========== 协议定义 (Protocol) ==========
+protocol TaskResult {
+    status: "string",
+    result: "string",
+    error: "string?"
+}
+
+protocol IntentClass {
+    type: "string",
+    confidence: "float",
+    params: "dict?"
+}
+
+// ========== 工具定义 (Tool) ==========
+tool system_execute {
+    description: "Execute system command and return result",
+    parameters: {
+        "command": "string",
+        "timeout": "int?"
+    }
+}
+
+tool memory_store {
+    description: "Store information in persistent memory",
+    parameters: {
+        "key": "string",
+        "value": "string",
+        "level": "string?"
+    }
+}
+
+tool memory_retrieve {
+    description: "Retrieve information from persistent memory",
+    parameters: {
+        "key": "string"
+    }
+}
+
+tool web_search {
+    description: "Search the web for information",
+    parameters: {
+        "query": "string"
+    }
+}
+
+// ========== 核心智能体 (Core Agents) ==========
+
+// 意图分类智能体
+agent IntentRouter {
+    role: "User Intent Classifier",
+    prompt: "Analyze user input and classify intent type:
+    - file_op: file operations (ls, cd, cat, mkdir, rm, cp, mv)
+    - system_info: system info (top, free, df, uname, ps, whoami)
+    - network: network operations (ping, curl, wget, netstat)
+    - security: security operations (chmod, chown, su, sudo)
+    - web_search: web search (search, google, bing)
+    - ai_chat: general conversation
+    Return JSON format with type, confidence and params fields"
+}
+
+// 文件管理智能体
+agent FileManager uses std.shell {
+    role: "File System Manager",
+    prompt: "You are a Linux file manager expert. Execute commands like ls, cd, cat, mkdir, rm, cp, mv, touch, chmod using shell.",
+    model: "glm-5"
+}
+
+// 系统监控智能体
+agent SystemMonitor uses std.shell {
+    role: "System Monitor",
+    prompt: "You are a system monitoring expert. Execute commands like top, free, df, uname, ps, whoami, hostname, uptime to gather system information.",
+    model: "glm-5"
+}
+
+// 网络管理智能体
+agent NetworkManager uses std.shell {
+    role: "Network Manager",
+    prompt: "You are a network management expert. Handle network diagnostics, ping, curl, wget, and network configuration.",
+    model: "glm-5"
+}
+
+// 安全卫士智能体
+agent SecurityGuard {
+    role: "Security Guard",
+    prompt: "You are a security guard for the OS. Assess risk level of commands. Block dangerous operations like rm -rf /, format, fdisk unless explicitly authorized.",
+    model: "glm-5"
+}
+
+// AI对话智能体
+agent AIChatBot {
+    role: "Conversational AI",
+    prompt: "You are YatAIOS, a friendly and helpful AI assistant. Engage in natural conversation and assist with user queries.",
+    model: "glm-5"
+}
+
+// 记忆管理智能体
+agent MemoryManager uses memory_store, memory_retrieve {
+    role: "Memory Manager",
+    prompt: "You manage persistent memory for the OS. Store important facts, preferences, and conversation history.",
+    model: "glm-5"
+}
+
+// 任务编排智能体
+agent TaskOrchestrator {
+    role: "Task Coordinator",
+    prompt: "You are a task orchestrator. Coordinate multiple agents to complete complex multi-step tasks.",
+    model: "glm-5"
+}
+
+// ========== 主工作流 (Main Workflows) ==========
+
+// 主入口流程
+flow main {
+    user_input = "Show me system status";
+    IntentRouter.run(user_input);
+}
+
+// 文件操作流程
+flow file_operation {
+    FileManager.run("ls -la");
+}
+
+// 系统检查流程
+flow system_check {
+    SystemMonitor.run("uname -a && free -h && df -h");
+}
+
+// 网络诊断流程
+flow network_diagnosis {
+    NetworkManager.run("ping -c 4 8.8.8.8");
+}
+
+// 安全检查流程
+flow security_check {
+    SecurityGuard.run("assess chmod 644 /etc/passwd");
+}
+
+// 组合任务流程
+flow multi_agent_task {
+    FileManager.run("ls -la");
+    SystemMonitor.run("free -h");
+}
+
+// 记忆存储流程
+flow remember {
+    MemoryManager.store("user_preference", "dark_mode", "user");
+}
+
+// ========== 快捷命令流程 (Shortcut Flows) ==========
+
+flow quick_ls {
+    FileManager.run("ls -lah");
+}
+
+flow quick_ps {
+    SystemMonitor.run("ps aux | head -20");
+}
+
+flow quick_df {
+    SystemMonitor.run("df -h");
+}
+
+flow quick_free {
+    SystemMonitor.run("free -h");
+}
+
+flow quick_whoami {
+    SystemMonitor.run("whoami");
+}
