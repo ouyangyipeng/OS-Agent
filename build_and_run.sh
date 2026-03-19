@@ -1,19 +1,21 @@
 #!/bin/bash
 #==============================================================================
-# Bianbu LLM OS - 一键构建与运行脚本
-# Build and Run Script
+# YatAIOS - 一键构建与运行脚本
+# Yet Another Transformative AI OS
 #
 # 功能：
 #   1. 自动安装依赖
 #   2. 配置环境
-#   3. 运行测试
-#   4. 启动 CLI
+#   3. 编译Nexa脚本
+#   4. 运行测试
+#   5. 启动 CLI
 #
 # 用法：
 #   bash build_and_run.sh [选项]
 #
 # 选项：
 #   --init          只初始化环境
+#   --nexa          编译Nexa脚本
 #   --test          运行测试
 #   --cli           启动 CLI (默认)
 #   --daemon        启动守护进程
@@ -54,8 +56,9 @@ print_banner() {
     echo -e "${CYAN}║${NC}${BOLD}     ██║ ╚═╝ ██║███████╗███████╗   ██║   ╚██████╗███████╗███████╗${NC}${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}${BOLD}     ╚═╝     ╚═╝╚══════╝╚══════╝   ╚═╝    ╚═════╝╚══════╝╚══════╝${NC}${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}${BOLD}                                                                  ${NC}${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}         ${BOLD}融合原生AI智能体的Bianbu系统交互范式重构${NC}              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}         ${BOLD}LLM OS - Intent-Driven Operating System${NC}              ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                    ${BOLD}YatAIOS${NC}                                      ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}         ${BOLD}Yet Another Transformative AI OS${NC}                        ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}         ${BOLD}Intent-Driven Operating System${NC}                           ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}                                                                  ${NC}${CYAN}║${NC}"
     echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
@@ -63,12 +66,13 @@ print_banner() {
 
 # 显示帮助
 show_help() {
-    echo "Bianbu LLM OS - 构建与运行脚本"
+    echo "YatAIOS - 构建与运行脚本"
     echo ""
     echo "用法: $0 [选项]"
     echo ""
     echo "选项:"
     echo "  --init          初始化环境 (安装依赖)"
+    echo "  --nexa          编译Nexa脚本"
     echo "  --test          运行测试"
     echo "  --cli           启动 CLI 界面 (默认)"
     echo "  --daemon        启动守护进程"
@@ -77,6 +81,7 @@ show_help() {
     echo ""
     echo "示例:"
     echo "  $0 --init        # 初始化环境"
+    echo "  $0 --nexa       # 编译Nexa脚本"
     echo "  $0 --test       # 运行测试"
     echo "  $0 --cli        # 启动 CLI"
     echo "  $0 --all        # 运行全部流程"
@@ -189,6 +194,35 @@ check_config() {
     fi
 }
 
+# 编译Nexa脚本
+compile_nexa() {
+    log_step "编译 Nexa 脚本..."
+    
+    if ! command -v nexa &> /dev/null; then
+        log_warn "Nexa CLI 未安装，跳过编译"
+        return 0
+    fi
+    
+    echo ""
+    echo "========================================"
+    echo "  编译 Nexa 智能体脚本"
+    echo "========================================"
+    echo ""
+    
+    # 编译 YatAIOS 核心模块
+    if [ -f "nexa_scripts/yatai_os_core.nx" ]; then
+        nexa build nexa_scripts/yatai_os_core.nx && log_success "yatai_os_core.nx 编译成功" || log_error "yatai_os_core.nx 编译失败"
+    fi
+    
+    # 编译 Bianbu 主模块
+    if [ -f "nexa_scripts/bianbu_main.nx" ]; then
+        nexa build nexa_scripts/bianbu_main.nx && log_success "bianbu_main.nx 编译成功" || log_error "bianbu_main.nx 编译失败"
+    fi
+    
+    echo ""
+    log_success "Nexa 脚本编译完成"
+}
+
 # 运行测试
 run_tests() {
     log_step "运行测试..."
@@ -218,7 +252,7 @@ start_cli() {
     
     echo ""
     echo "========================================"
-    echo "  启动 Bianbu LLM OS CLI"
+    echo "  启动 YatAIOS CLI"
     echo "========================================"
     echo ""
     
@@ -368,6 +402,10 @@ main() {
                 MODE="init"
                 shift
                 ;;
+            --nexa)
+                MODE="nexa"
+                shift
+                ;;
             --test)
                 MODE="test"
                 shift
@@ -397,7 +435,7 @@ main() {
     done
     
     echo "========================================"
-    log_info "Bianbu LLM OS 构建系统"
+    log_info "YatAIOS 构建系统"
     log_info "模式: $MODE"
     echo "========================================"
     echo ""
@@ -412,6 +450,11 @@ main() {
             check_config
             self_check
             git_commit
+            ;;
+        nexa)
+            compile_nexa
+            ;;
+        test)
             log_success "初始化完成!"
             ;;
         test)

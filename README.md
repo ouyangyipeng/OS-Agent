@@ -1,12 +1,13 @@
-# Bianbu LLM OS
+# YatAIOS - Yet Another Transformative AI OS
 
-## 融合原生AI智能体的Bianbu系统交互范式重构
+## 融合原生AI智能体的意图驱动操作系统
 
-### Reconstructing Bianbu OS Interaction Paradigm with Native AI Agent Integration
+### Intent-Driven Operating System with Native AI Agent Integration
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Platform: RISC-V K1](https://img.shields.io/badge/Platform-K1%20RISC--V-orange)](https://www.spacemit.com)
 [![Python: 3.8+](https://img.shields.io/badge/Python-3.8+-green)](https://www.python.org/)
+[![Nexa: v0.1](https://img.shields.io/badge/Nexa-v0.1-purple)](https://nexa-lang.org)
 
 ---
 
@@ -36,13 +37,23 @@
 ```
 agent-os/
 ├── core/                    # 核心模块
-│   └── agent_daemon.py     # 智能体守护进程
+│   ├── agent_daemon.py      # 智能体守护进程
+│   ├── nexa_runtime.py      # Nexa运行时
+│   └── persistent_memory.py # 持久化记忆
 ├── tools/                   # 工具抽象层
-│   └── system_tools.py      # 系统工具集
+│   ├── system_tools.py      # 系统工具集
+│   └── extended_tools.py    # 扩展工具
 ├── security/                # 安全模块
 │   └── security_manager.py  # 权限与审计
 ├── cli/                     # CLI 界面
 │   └── llmos_cli.py         # 意图驱动 CLI
+├── soul/                    # 智能体灵魂配置
+│   ├── SKILL.md             # 技能定义
+│   ├── SOUL.md              # 智能体灵魂
+│   └── TOOLS.md             # 工具注册表
+├── nexa_scripts/            # Nexa智能体脚本
+│   ├── yatai_os_core.nx     # YatAIOS核心模块
+│   └── bianbu_main.nx       # Bianbu主智能体
 ├── tests/                   # 测试
 │   └── auto_test_pipeline.py # 自动测试管道
 ├── docs/                    # 文档
@@ -100,9 +111,20 @@ bash build_and_run.sh --test
 启动 CLI 后，直接输入自然语言指令：
 
 ```
-🏠 Bianbu > 查看系统信息
-🏠 Bianbu > 帮我找一下桌面上昨天下载的PDF文件
-🏠 Bianbu > 安装 nginx 服务器
+YatAIOS:agent-os$ 查看系统信息
+YatAIOS:agent-os$ 帮我找一下桌面上昨天下载的PDF文件
+YatAIOS:agent-os$ 安装 nginx 服务器
+```
+
+### 指令穿透模式
+
+CLI支持直接执行操作系统命令，无需AI介入：
+
+```
+YatAIOS:agent-os$ ls -la
+YatAIOS:agent-os$ cd /root
+YatAIOS:agent-os$ pwd
+YatAIOS:agent-os$ ps aux | head -10
 ```
 
 ### 可用命令
@@ -132,13 +154,24 @@ python3 cli/llmos_cli.py -i "查看系统信息"
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Bianbu LLM OS                           │
+│                        YatAIOS                               │
+│              Intent-Driven Operating System                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────┐      ┌──────────────┐      ┌───────────┐│
 │  │   CLI User   │ ───▶ │    Router    │ ───▶ │  Sub      ││
 │  │   Interface  │      │   Agent      │      │  Agents   ││
+│  │  (YatAIOS)   │      │  (Intent)     │      │ (Nexa)    ││
 │  └──────────────┘      └──────────────┘      └───────────┘│
+│                              │                               │
+│                              ▼                               │
+│  ┌──────────────────────────────────────────────────────────┐│
+│  │              Nexa Agent Runtime                          ││
+│  │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐       ││
+│  │  │ File    │ │Process  │ │Network  │ │Memory   │       ││
+│  │  │Manager  │ │Monitor  │ │Manager  │ │Manager  │       ││
+│  │  └─────────┘ └─────────┘ └─────────┘ └─────────┘       ││
+│  └──────────────────────────────────────────────────────────┘│
 │                              │                               │
 │                              ▼                               │
 │  ┌──────────────────────────────────────────────────────────┐│
@@ -158,7 +191,7 @@ python3 cli/llmos_cli.py -i "查看系统信息"
 │                              ▼                               │
 │  ┌──────────────────────────────────────────────────────────┐│
 │  │              Memory Store (SQLite)                       ││
-│  │  • Conversation History  • Task Memory                  ││
+│  │  • Conversation History  • Task Memory  • Skills        ││
 │  └──────────────────────────────────────────────────────────┘│
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -257,8 +290,9 @@ python3 cli/llmos_cli.py -i "查看系统信息"
 llm:
   primary:
     provider: "openai"        # openai, anthropic, ollama
-    model: "gpt-4o-mini"
-    api_key: "${OPENAI_API_KEY}"
+    model: "glm-5"            # 默认模型
+    api_base: "https://aihub.arcsysu.cn/v1"  # API端点
+    api_key: "${OPENAI_API_KEY}"  # 或直接配置在config.yaml中
 ```
 
 ### 端云协同策略
@@ -348,6 +382,33 @@ SubAgent(
 
 ---
 
+## Nexa智能体脚本
+
+YatAIOS使用[Nexa语言](https://nexa-lang.org)定义核心智能体和工作流。
+
+### 核心Nexa模块
+
+[`nexa_scripts/yatai_os_core.nx`](nexa_scripts/yatai_os_core.nx) 包含：
+
+- **协议定义**：TaskResult, IntentClass
+- **工具定义**：system_execute, memory_store, memory_retrieve, web_search
+- **核心智能体**：IntentRouter, FileManager, SystemMonitor, NetworkManager, SecurityGuard, AIChatBot, MemoryManager, TaskOrchestrator
+- **工作流**：main, file_operation, system_check, network_diagnosis, security_check
+
+### 编译Nexa脚本
+
+```bash
+nexa build nexa_scripts/yatai_os_core.nx
+```
+
+### 编译并运行
+
+```bash
+nexa run nexa_scripts/yatai_os_core.nx
+```
+
+---
+
 ## 硬件平台
 
 本项目设计运行于 **进迭时空 K1 RISC-V AI 开发平台 (MUSE BOOK)**：
@@ -383,7 +444,7 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ## 作者
 
-Bianbu LLM OS Team
+YatAIOS / Bianbu LLM OS Team
 
 ---
 
