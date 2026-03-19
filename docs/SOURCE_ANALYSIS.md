@@ -385,37 +385,143 @@ class ConversationContext:
 
 ## 6. NexaRuntime 语言运行时
 
-### 6.1 语法结构
+### 6.1 Nexa语言概述
 
-```python
-class NexaParser:
-    """
-    Nexa语言解析器
-    
-    Nexa语法示例:
-    
-    protocol Assistant {
-        agent chat {
-            model: "gpt-4o-mini"
-            temperature: 0.7
-        }
-        
-        workflow greeting {
-            step1: chat.complete("你好")
-            return step1
-        }
-    }
-    """
-    
-    def parse(self, script: str) -> NexaAST:
-        """解析Nexa脚本为AST"""
-        # 协议定义 -> protocol name { ... }
-        # 智能体定义 -> agent name { ... }
-        # 工作流定义 -> workflow name { ... }
-        # 步骤定义 -> step: agent.action(args)
+Nexa是一种**专为智能体编程设计的领域特定语言(DSL)**，具有以下特点：
+
+| 特性 | 描述 |
+|------|------|
+| 声明式语法 | 通过声明式方式定义智能体和工作流 |
+| 编译时检查 | 提前发现语法和类型错误 |
+| 运行时优化 | 编译后代码执行效率更高 |
+| 标准工具库 | 内置std.shell等常用工具支持 |
+
+### 6.2 Nexa源文件分析 ([`nexa_scripts/bianbu_main.nx`](nexa_scripts/bianbu_main.nx))
+
+```nexa
+agent SysAdminBot uses std.shell {
+    prompt: "You are a Linux system administrator bot for Bianbu OS.
+             Answer questions about the OS by executing commands like
+             `uname -a`, `free -m`, `ls -la`, etc."
+}
+
+flow main {
+    SysAdminBot.run("Please run `ls -a` in the current project root,
+                     and check the ram usage. Then summarize what's in
+                     the repo and how much memory is free.");
+}
 ```
 
-### 6.2 Workflow执行
+**源文件结构解析：**
+
+| 语法 | 作用 |
+|------|------|
+| `agent SysAdminBot` | 定义名为SysAdminBot的智能体 |
+| `uses std.shell` | 声明使用标准shell工具库 |
+| `prompt: "..."` | 设定智能体系统提示词 |
+| `flow main { ... }` | 定义名为main的工作流 |
+| `SysAdminBot.run(...)` | 调用智能体的run方法执行任务 |
+
+### 6.3 编译后的Python代码分析 ([`nexa_scripts/bianbu_main.py`](nexa_scripts/bianbu_main.py))
+
+```python
+# 此文件由 Nexa v0.5 Code Generator 自动生成
+from src.runtime.stdlib import STD_NAMESPACE_MAP
+from src.runtime.agent import NexaAgent
+from src.runtime.evaluator import nexa_semantic_eval, nexa_intent_routing
+from src.runtime.orchestrator import join_agents, nexa_pipeline
+from src.runtime.memory import global_memory
+from src.runtime.stdlib import STD_TOOLS_SCHEMA, STD_NAMESPACE_MAP
+
+SysAdminBot = NexaAgent(
+    name="SysAdminBot",
+    prompt="You are a Linux system administrator bot for Bianbu OS...",
+    model="minimax-m2.5",           # 默认模型
+    role="",
+    memory_scope="local",           # 记忆范围
+    stream=False,                   # 非流式输出
+    tools=[STD_TOOLS_SCHEMA['std_shell_execute']]  # 工具配置
+)
+
+def flow_main():
+    SysAdminBot.run("Please run `ls -a` in the current project root...")
+
+if __name__ == "__main__":
+    flow_main()
+```
+
+**编译产物特点：**
+
+| 元素 | 说明 |
+|------|------|
+| `NexaAgent` | Nexa运行时提供的Agent基类 |
+| `STD_TOOLS_SCHEMA` | 标准工具模式注册表 |
+| `flow_main()` | 工作流编译为可调用函数 |
+| 依赖注入 | 通过import获取运行时组件 |
+
+### 6.4 为什么用Nexa更好
+
+#### 6.4.1 对比传统Python方式
+
+**传统Python方式（手写）：**
+```python
+from agent_daemon import AgentDaemon
+
+agent = AgentDaemon()
+result = agent.process_intent(
+    "请运行ls -a命令并检查内存使用情况"
+)
+```
+
+**Nexa方式（声明式）：**
+```nexa
+agent SysAdminBot uses std.shell {
+    prompt: "You are a Linux system administrator bot..."
+}
+
+flow main {
+    SysAdminBot.run("Please run `ls -a`...");
+}
+```
+
+#### 6.4.2 Nexa优势分析
+
+| 维度 | 传统Python | Nexa | 优势 |
+|------|-----------|------|------|
+| **代码简洁度** | 50+行 | 8行 | Nexa减少80%代码量 |
+| **类型安全** | 运行时检查 | 编译时检查 | 提前发现错误 |
+| **工具集成** | 手动注册 | `uses std.shell` | 一行声明即可 |
+| **工作流定义** | 硬编码 | `flow main` | 声明式，意图清晰 |
+| **可维护性** | 散落各处 | 集中定义 | 易于管理和修改 |
+| **学习曲线** | 需了解框架 | DSL语法 | 更符合业务逻辑 |
+
+#### 6.4.3 Nexa编译流程
+
+```
+bianbu_main.nx (源文件)
+        │
+        ▼ [nexa build]
+bianbu_main.py (编译产物)
+        │
+        ├── NexaAgent实例化
+        ├── STD_TOOLS_SCHEMA加载
+        ├── flow_main函数定义
+        │
+        ▼ [Python执行]
+    API调用 → LLM响应 → 工具执行
+```
+
+#### 6.4.4 适用场景
+
+Nexa特别适合：
+- **复杂工作流**：多步骤、多智能体协作
+- **快速原型**：声明式定义，迭代开发
+- **跨项目复用**：标准化智能体定义
+- **团队协作**：业务人员可读，易于review
+
+---
+
+### 6.5 Workflow执行
 
 ```python
 class NexaRuntime:
