@@ -1,0 +1,25 @@
+# Docker构建排除文件
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.git
+.gitignore
+.venv
+venv
+env
+.env
+*.log
+*.db
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+*~

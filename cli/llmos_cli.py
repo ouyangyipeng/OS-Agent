@@ -409,12 +409,12 @@ class CLI:
                 cwd_short = os.path.basename(self.cwd) or self.cwd
                 
                 # 获取用户输入 - 显示YatAIOS和当前路径
-                if self.use_rich:
-                    prompt = f"[cyan]YatAIOS[/cyan]:[blue]{cwd_short}[/blue]$ "
+                if self.use_rich and self.console:
+                    self.console.print(f"[cyan]YatAIOS[/cyan]:[blue]{cwd_short}[/blue]$ ", end="")
+                    user_input = input().strip()
                 else:
                     prompt = f"YatAIOS:{cwd_short}$ "
-                
-                user_input = input(prompt).strip()
+                    user_input = input(prompt).strip()
                 
                 # 指令穿透 - 检测是否是操作系统命令
                 first_word = user_input.split()[0] if user_input.split() else ''

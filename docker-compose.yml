@@ -1,0 +1,38 @@
+# YatAIOS Docker Compose 配置
+version: '3.8'
+
+services:
+  yataios:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yataios
+    # 交互模式运行
+    stdin_open: true
+    tty: true
+    # 挂载数据目录以便持久化
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config.yaml:/app/config.yaml:ro
+    # 环境变量配置
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-api-key}
+    # 网络模式
+    network_mode: host
+
+  # 如果需要在后台运行服务模式
+  yataiosd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yataios-daemon
+    command: ["python3", "-m", "core.agent_daemon"]
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-api-key}
+    restart: unless-stopped
+    network_mode: host

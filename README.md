@@ -62,6 +62,8 @@ agent-os/
 ├── config.yaml              # 配置文件
 ├── init_env.sh              # 环境初始化脚本
 ├── build_and_run.sh         # 一键构建运行脚本
+├── Dockerfile               # Docker镜像构建文件
+├── docker-compose.yml       # Docker Compose配置
 └── README.md                # 本文档
 ```
 
@@ -96,7 +98,23 @@ export OPENAI_API_KEY="your-api-key"
 python3 cli/llmos_cli.py
 ```
 
-### 方式三：仅运行测试
+### 方式三：Docker部署
+
+```bash
+# 构建Docker镜像
+docker build -t yataios .
+
+# 运行交互式CLI
+docker run -it yataios
+
+# 使用docker-compose运行
+docker-compose up -d yataios
+
+# 设置API密钥后运行
+OPENAI_API_KEY=your-key docker-compose up -d yataios
+```
+
+### 方式四：仅运行测试
 
 ```bash
 bash build_and_run.sh --test
