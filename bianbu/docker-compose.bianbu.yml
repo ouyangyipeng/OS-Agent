@@ -1,0 +1,85 @@
+# YatAIOS on Bianbu OS - Docker Compose配置
+#
+# 赛题：2026年全国大学生计算机系统能力大赛-操作系统设计赛
+# 平台：进迭时空 K1 RISC-V AI 开发平台 (MUSE BOOK)
+# 系统：Bianbu OS (基于Ubuntu优化的RISC-V系统)
+#
+# 使用说明：
+# 1. 在目标平台上安装Bianbu OS: https://www.spacemit.com/community/document
+# 2. 在Bianbu系统上直接运行: bash build_and_run.sh --cli
+# 3. 或使用Docker构建并运行
+
+version: '3.8'
+
+services:
+  # ============================================================
+  # 方案1：开发测试容器（在Bianbu或模拟环境中运行）
+  # ============================================================
+  yataios-dev:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: yataios-dev
+    hostname: yataios-bianbu
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+      - ../config.yaml:/app/config.yaml:ro
+    environment:
+      - YATAIOS_PLATFORM=k1-riscv
+      - YATAIOS_OS=bianbu
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    network_mode: host
+    working_dir: /app
+    command: /app/venv/bin/python3 -m cli.llmos_cli
+
+  # ============================================================
+  # 方案2：QEMU RISC-V模拟器容器
+  # ============================================================
+  bianbu-qemu:
+    image: riscv64ubuntu:22.04
+    container_name: bianbu-qemu-dev
+    hostname: bianbu-riscv
+    privileged: true
+    volumes:
+      - ../:/workspace/yataios
+    environment:
+      - QEMU_TARGET=riscv64
+      - PLATFORM=k1-riscv
+    command: >
+      bash -c "
+        echo '========================================'
+        echo ' YatAIOS on RISC-V QEMU Emulator'
+        echo ' Platform: K1 RISC-V (QEMU Virtual)'
+        echo '========================================'
+        echo ''
+        echo 'For full Bianbu OS:'
+        echo '1. Download from: https://www.spacemit.com/community/document'
+        echo '2. Run: qemu-system-riscv64 -M virt -kernel vmlinuz -initrd rootfs.cpio -hda bianbu.img'
+        echo ''
+        echo 'This container provides RISC-V cross-compilation toolchain.'
+        /bin/bash
+      "
+
+  # ============================================================
+  # 方案3：守护进程模式
+  # ============================================================
+  yataiosd:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: yataios-daemon
+    hostname: yataios-daemon
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+      - ../config.yaml:/app/config.yaml:ro
+    environment:
+      - YATAIOS_PLATFORM=k1-riscv
+      - YATAIOS_OS=bianbu
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    network_mode: host
+    restart: unless-stopped
+    command: /app/venv/bin/python3 -m core.agent_daemon

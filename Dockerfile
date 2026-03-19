@@ -1,11 +1,22 @@
 # YatAIOS - Docker构建文件
 # 用于在容器中运行YatAIOS (Bianbu LLM OS)
+#
+# 赛题：2026年全国大学生计算机系统能力大赛-操作系统设计赛
+# 平台：进迭时空 K1 RISC-V AI 开发平台 (MUSE BOOK)
+# 系统：Bianbu (基于Ubuntu优化的RISC-V系统)
+#
+# 本Dockerfile构建适用于以下场景：
+# 1. 本地开发测试（在Ubuntu上模拟Bianbu环境）
+# 2. CI/CD自动化测试
+# 3. 容器化部署
 
 FROM ubuntu:22.04
 
 # 维护者信息
 LABEL maintainer="YatAIOS Team"
-LABEL description="Intent-Driven Operating System with Native AI Agent Integration"
+LABEL description="YatAIOS - Intent-Driven OS for Bianbu K1 RISC-V Platform"
+LABEL platform="RISC-V K1"
+LABEL system="Bianbu OS"
 
 # 设置环境变量
 ENV DEBIAN_FRONTEND=noninteractive
