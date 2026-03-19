@@ -491,3 +491,37 @@ if __name__ == '__main__':
         print(f"   代码长度: {len(py_code)} 字符")
     
     print("\n=== 演示完成 ===")
+
+
+def run_compiled_nexa(compiled_path: str, func_name: str = "flow_main") -> Any:
+    """
+    运行编译后的Nexa Python代码的便捷函数
+    
+    Args:
+        compiled_path: 编译后的.py文件路径
+        func_name: 要执行的函数名，默认flow_main
+    
+    Returns:
+        Any: 函数执行结果
+    """
+    import importlib.util
+    import sys
+    from pathlib import Path
+    
+    path = Path(compiled_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Compiled file not found: {compiled_path}")
+    
+    spec = importlib.util.spec_from_file_location("nexa_compiled", compiled_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Failed to load module from {compiled_path}")
+    
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["nexa_compiled"] = module
+    spec.loader.exec_module(module)
+    
+    if hasattr(module, func_name):
+        func = getattr(module, func_name)
+        return func()
+    else:
+        raise AttributeError(f"Function '{func_name}' not found in {compiled_path}")
