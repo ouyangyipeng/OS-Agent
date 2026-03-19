@@ -8,3 +8,7 @@ exit
 查看当前目录的文件
 exit
 exit
+你好
+exit
+现在系统情况如何
+exit

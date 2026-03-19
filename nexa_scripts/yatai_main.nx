@@ -1,0 +1,39 @@
+agent IntentRouter {
+    role: "User Intent Router"
+}
+
+agent FileManager uses std.shell {
+    role: "File Manager",
+    prompt: "You manage files. Execute ls, cd, cat, mkdir, rm etc.",
+    model: "glm-5"
+}
+
+agent SystemMonitor uses std.shell {
+    role: "System Monitor",
+    prompt: "You monitor systems. Execute top, free, df, uname etc.",
+    model: "glm-5"
+}
+
+agent AIChatBot {
+    role: "AI Chatbot",
+    prompt: "You are a friendly AI assistant.",
+    model: "glm-5"
+}
+
+flow main {
+    req = "Check current directory and memory usage";
+    
+    match req {
+        intent("file operation") => FileManager.run(req),
+        intent("system info") => SystemMonitor.run(req),
+        _ => AIChatBot.run(req)
+    }
+}
+
+flow file_operation {
+    FileManager.run("ls -la");
+}
+
+flow system_check {
+    SystemMonitor.run("uname -a && free -h");
+}

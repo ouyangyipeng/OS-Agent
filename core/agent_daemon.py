@@ -335,6 +335,8 @@ class LLMBridge:
             
             # 支持自定义API URL（如 aihub.arcsysu.cn）
             api_base = self.llm_config.get('api_base', 'https://api.openai.com/v1')
+            # 优先使用配置文件中的API Key（避免环境变量覆盖）
+            api_key = self.llm_config.get('api_key') or os.environ.get('OPENAI_API_KEY')
             self.client = OpenAI(api_key=api_key, base_url=api_base)
             self.model = self.llm_config.get('model', 'gpt-4o-mini')
             logger.info(f"OpenAI 客户端初始化完成，模型: {self.model}，URL: {api_base}")
