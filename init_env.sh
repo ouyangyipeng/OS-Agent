@@ -124,6 +124,7 @@ pip install \
     langchain-community==0.0.38 \
     langchain-core==0.1.52 \
     openai==1.30.1 \
+    httpx==0.27.0 \
     anthropic==0.21.3 \
     requests==2.31.0 \
     psutil==5.9.8 \

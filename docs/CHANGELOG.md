@@ -20,6 +20,57 @@
 | 8 | 完整文档 | 2026-03-19 | 1 | 方案设计、源码分析 |
 | 9 | Docker容器支持 | 2026-03-19 | 1 | Dockerfile、docker-compose |
 | 10 | Nexa扩展与品牌更新 | 2026-03-19 | 1 | Nexa模块、YatAIOS品牌 |
+| 11 | 依赖兼容性修复 | 2026-03-23 | 1 | httpx版本修复、requirements.txt |
+
+---
+
+## 迭代 11: 依赖兼容性修复
+
+### 日期
+2026-03-23
+
+### 目标
+修复 httpx 0.28.x 与 openai 1.30.1 不兼容导致的 CLI 启动失败问题。
+
+### 问题描述
+运行 `python3 cli/llmos_cli.py` 时出现错误：
+```
+File ".../openai/_base_client.py", line 723, in __init__
+    super().__init__(**kwargs)
+TypeError: __init__() got an unexpected keyword argument 'proxies'
+```
+
+### 根本原因
+- **httpx 0.28.0** 引入了破坏性 API 变更，移除了 `proxies` 参数
+- **openai 1.30.1** 在初始化 `SyncHttpxClientWrapper` 时使用了旧版 httpx 的参数
+- 版本不兼容导致 OpenAI 客户端初始化失败
+
+### 解决方案
+1. 创建 `requirements.txt` 固定依赖版本
+2. 更新 `init_env.sh` 添加 `httpx==0.27.0`
+3. 创建 `plans/fix_openai_init_error.md` 详细记录修复过程
+
+### 修改的文件
+| 文件 | 变更 |
+|------|------|
+| `requirements.txt` | 新建，固定所有依赖版本 |
+| `init_env.sh` | 添加 `httpx==0.27.0` 依赖 |
+| `README.md` | 添加依赖安装说明和故障排除 |
+| `PROGRESS.md` | 更新进度记录 |
+
+### 技术决策
+
+| 决策 | 选择 | 原因 |
+|------|------|------|
+| httpx 版本 | 0.27.0 | 与 openai 1.30.1 兼容 |
+| 依赖管理 | requirements.txt | 便于版本控制和复现 |
+
+### 验证结果
+```bash
+$ python3 cli/llmos_cli.py
+2026-03-23 21:02:41,617 - AgentDaemon - INFO - OpenAI 客户端初始化完成，模型: glm-5
+2026-03-23 21:02:41,618 - AgentDaemon - INFO - AgentDaemon 初始化完成
+```
 
 ---
 

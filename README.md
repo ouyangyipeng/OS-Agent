@@ -91,12 +91,20 @@ bash init_env.sh
 # 2. 激活虚拟环境
 source venv/bin/activate
 
-# 3. 配置 API 密钥
+# 3. 安装依赖（可选，init_env.sh 已自动安装）
+pip install -r requirements.txt
+
+# 4. 配置 API 密钥
 export OPENAI_API_KEY="your-api-key"
 
-# 4. 启动 CLI
+# 5. 启动 CLI
 python3 cli/llmos_cli.py
 ```
+
+> **注意**: 如果遇到 `httpx` 相关错误，请确保使用 `httpx==0.27.0` 版本：
+> ```bash
+> pip install httpx==0.27.0
+> ```
 
 ### 方式三：Docker部署
 
