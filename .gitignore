@@ -36,3 +36,19 @@ htmlcov/
 # Temporary
 *.tmp
 *.bak
+
+# Sensitive - 包含 API Key 等敏感信息，禁止提交！
+config.yaml
+*.env
+.env.*
+secrets.yaml
+secrets.json
+
+# Logs - 可能包含敏感信息
+logs/
+*.log
+
+# Data - 数据库和缓存
+data/*.db
+data/*.sqlite
+cache/

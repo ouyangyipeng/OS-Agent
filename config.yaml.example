@@ -1,0 +1,303 @@
+#==============================================================================
+# Bianbu LLM OS - 配置文件模板
+# 融合原生AI智能体的Bianbu系统交互范式重构
+# 
+# 使用方法:
+# 1. 复制此文件为 config.yaml
+# 2. 设置环境变量 OPENAI_API_KEY
+# 3. 根据需要修改其他配置
+#
+# 安全提示: 请勿在 config.yaml 中硬编码 API Key！
+#==============================================================================
+
+#------------------------------------------------------------------------------
+# 系统基础配置
+#------------------------------------------------------------------------------
+system:
+  name: "Bianbu LLM OS"
+  version: "1.0.0"
+  mode: "prototype"  # prototype | production
+  debug: false
+  log_level: "INFO"  # DEBUG, INFO, WARN, ERROR
+  
+  # 项目路径配置
+  paths:
+    log_dir: "logs"
+    data_dir: "data"
+    cache_dir: "cache"
+    pending_dir: "pending_tasks"
+    tools_dir: "tools"
+    agents_dir: "agents"
+
+#------------------------------------------------------------------------------
+# LLM 大语言模型配置
+# 支持多后端: openai, anthropic, local, ollama
+# 
+# 安全提示: 请使用环境变量设置 API Key，不要在此文件中硬编码！
+# - OPENAI_API_KEY: OpenAI/兼容 API 密钥
+# - ANTHROPIC_API_KEY: Anthropic API 密钥
+#------------------------------------------------------------------------------
+llm:
+  # 主 LLM 配置
+  primary:
+    provider: "openai"  # openai, anthropic, local, ollama, custom
+    model: "glm-5"
+    api_base: "https://aihub.arcsysu.cn/v1"
+    api_key: "${OPENAI_API_KEY}"  # 从环境变量读取，不要硬编码！
+    max_tokens: 2048
+    temperature: 0.7
+    timeout: 120
+    
+  # 备选 LLM 配置（端云协同）
+  fallback:
+    provider: "anthropic"
+    model: "claude-3-haiku-20240307"
+    api_base: "https://api.anthropic.com"
+    api_key: "${ANTHROPIC_API_KEY}"
+    max_tokens: 1024
+    temperature: 0.7
+    timeout: 60
+    
+  # 本地模型配置（边缘端）
+  local:
+    enabled: false
+    provider: "ollama"
+    model: "llama3"
+    api_base: "http://localhost:11434"
+    temperature: 0.8
+
+  # 端云协同策略
+  edge_cloud:
+    strategy: "auto"  # auto, prefer_local, prefer_cloud, force_cloud
+    local_threshold: 0.3  # 复杂度低于此值使用本地模型
+    network_check: true
+    max_local_complexity: "simple"  # simple, moderate, complex
+
+#------------------------------------------------------------------------------
+# 智能体核心配置
+#------------------------------------------------------------------------------
+agent:
+  # 主控智能体 (Router)
+  router:
+    name: "BianbuRouter"
+    description: "主控智能体，负责意图解析和任务分发"
+    max_steps: 10
+    step_delay: 0.5
+    enable_thinking: true
+    
+  # 子智能体配置
+  sub_agents:
+    - name: "HardwareOptimizer"
+      description: "负责硬件监控和性能调优"
+      specialty: ["cpu", "memory", "io", "process"]
+      priority: 1
+      
+    - name: "FileManager"  
+      description: "负责文件操作和文档处理"
+      specialty: ["file", "search", "archive"]
+      priority: 2
+      
+    - name: "NetworkManager"
+      description: "负责网络配置和监控"
+      specialty: ["network", "firewall", "dns"]
+      priority: 3
+      
+    - name: "SecurityGuard"
+      description: "安全审计和权限管理"
+      specialty: ["security", "permission", "audit"]
+      priority: 0  # 最高优先级
+
+  # 记忆配置
+  memory:
+    enabled: true
+    db_path: "data/memory.db"
+    max_history: 100
+    context_window: 10
+
+  # 自愈机制
+  self_healing:
+    enabled: true
+    max_retries: 3
+    retry_delay: 1.0
+
+#------------------------------------------------------------------------------
+# 工具系统配置
+#------------------------------------------------------------------------------
+tools:
+  # 工具注册表
+  registry:
+    - name: "file_operations"
+      enabled: true
+      dangerous: false
+      description: "文件和目录操作"
+      
+    - name: "process_management"
+      enabled: true
+      dangerous: true
+      description: "进程管理（启动/停止/监控）"
+      
+    - name: "network_tools"
+      enabled: true
+      dangerous: false
+      description: "网络诊断和配置"
+      
+    - name: "package_manager"
+      enabled: true
+      dangerous: true
+      description: "软件包安装和管理"
+      
+    - name: "system_info"
+      enabled: true
+      dangerous: false
+      description: "系统信息查询"
+      
+    - name: "web_search"
+      enabled: true
+      dangerous: false
+      description: "网络搜索（需要网络连接）"
+
+  # 工具执行配置
+  execution:
+    timeout: 30
+    sandbox: false
+    log_calls: true
+
+#------------------------------------------------------------------------------
+# 安全配置
+#------------------------------------------------------------------------------
+security:
+  # 权限等级 (0-4)
+  # 0: 完全开放 (仅测试环境)
+  # 1: 低风险操作
+  # 2: 中等风险操作
+  # 3: 高风险操作 (需要确认)
+  # 4: 系统关键操作 (严格审核)
+  permission_level: 2
+  
+  # 高危操作关键词
+  dangerous_keywords:
+    - "rm -rf"
+    - "format"
+    - "dd if="
+    - "mkfs"
+    - "fdisk"
+    - "chmod 777"
+    - "chown -R"
+    - "> /dev/"
+    - "shutdown"
+    - "reboot"
+    - "init 0"
+    - "init 6"
+    
+  # 审核队列配置
+  audit_queue:
+    enabled: true
+    path: "pending_tasks/"
+    auto_cleanup: true
+    retention_days: 7
+
+  # 敏感文件保护
+  protected_paths:
+    - "/etc/passwd"
+    - "/etc/shadow"
+    - "/etc/sudoers"
+    - "~/.ssh/"
+    - "~/.gnupg/"
+
+#------------------------------------------------------------------------------
+# CLI 界面配置
+#------------------------------------------------------------------------------
+cli:
+  # 显示配置
+  display:
+    show_banner: true
+    show_timestamp: true
+    color_output: true
+    rich_formatting: true
+    
+  # 提示符配置
+  prompt:
+    format: "YatAIOS:{path}$ "
+    show_user: false
+    show_host: false
+    
+  # 历史记录
+  history:
+    enabled: true
+    file: "data/command_history.txt"
+    max_size: 1000
+
+#------------------------------------------------------------------------------
+# 硬件平台配置
+#------------------------------------------------------------------------------
+hardware:
+  # 目标平台
+  platform: "bianbu_k1"
+  architecture: "riscv64"
+  
+  # 资源限制
+  limits:
+    max_memory_mb: 4096
+    max_cpu_percent: 80
+    max_disk_percent: 90
+    
+  # 监控配置
+  monitoring:
+    enabled: true
+    interval_seconds: 5
+    log_stats: true
+
+#------------------------------------------------------------------------------
+# 测试配置
+#------------------------------------------------------------------------------
+testing:
+  # 自动测试管道
+  auto_test:
+    enabled: true
+    test_cases_dir: "tests/"
+    report_dir: "output/"
+    
+  # 测试用例
+  test_cases:
+    - name: "basic_intent"
+      description: "基础意图理解测试"
+      enabled: true
+      
+    - name: "file_operations"
+      description: "文件操作测试"
+      enabled: true
+      
+    - name: "multi_step_task"
+      description: "多步骤任务测试"
+      enabled: true
+      
+    - name: "security_check"
+      description: "安全拦截测试"
+      enabled: true
+
+#------------------------------------------------------------------------------
+# 日志配置
+#------------------------------------------------------------------------------
+logging:
+  # 日志级别
+  level: "INFO"
+  
+  # 日志文件
+  file:
+    path: "logs/agent_daemon.log"
+    max_size_mb: 10
+    backup_count: 5
+    
+  # 控制台输出
+  console:
+    enabled: true
+    colorize: true
+    
+  # 敏感信息过滤
+  sensitive_filter:
+    enabled: true
+    patterns:
+      - "api_key"
+      - "password"
+      - "token"
+      - "secret"
